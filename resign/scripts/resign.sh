@@ -12,7 +12,7 @@ mkdir -p "$TEMP_PATH" || true
 
 
 # Finding IPA to modify
-if [ $(ls -1 $IPA_TO_RESIGN_DIR/*.ipa | wc -l) != 1 ]
+if [ $(ls -1 $IPA_TO_RESIGN_DIR/*.ipa | wc -l) -gt 1 ]
 then
 echo "Please ensure that there is only 1 IPA in the folder"
 exit
@@ -43,23 +43,25 @@ cp -rf "$APP_PATH/" "$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/"
 cp -rf "$DYLIBS_TO_INSERT_DIR/" "$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/"
 
 
-# Insert DYLIBS
-echo "Inserting LOAD commands for DYLIBs"
-for DYLIB in "$DYLIBS_TO_INSERT_DIR/"*.dylib
-do
-FILENAME=$(basename $DYLIB)
-"${SRCROOT}/resign/scripts/optool" install -c load -p "@executable_path/$FILENAME" -t "$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/$APP_EXECUTABLE"
-done
+if [ $(ls -1 $DYLIBS_TO_INSERT_DIR/* 2>/dev/null | wc -l) -gt 0 ]
+then
+	# Insert DYLIBS
+	echo "Inserting LOAD commands for DYLIBs"
+	for DYLIB in "$DYLIBS_TO_INSERT_DIR/"*
+	do
+	FILENAME=$(basename $DYLIB)
+	"${SRCROOT}/resign/scripts/optool" install -c load -p "@executable_path/$FILENAME" -t "$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/$APP_EXECUTABLE"
+	done
 
-# Sign DYLIBs
-echo "Sign DYLIBs"
-for DYLIB in "$DYLIBS_TO_INSERT_DIR/"*.dylib
-do
-FILENAME=$(basename $DYLIB)
-echo "SIGNING: $FILENAME"
-/usr/bin/codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/$FILENAME"
-done
-
+	# Sign DYLIBs
+	echo "Sign DYLIBs"
+	for DYLIB in "$DYLIBS_TO_INSERT_DIR/"*
+	do
+	FILENAME=$(basename $DYLIB)
+	echo "SIGNING: $FILENAME"
+	/usr/bin/codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/$FILENAME"
+	done
+fi
 
 
 # Get Entitlements
