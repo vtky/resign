@@ -64,6 +64,22 @@ then
 fi
 
 
+APP_FRAMEWORKS_PATH="$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/Frameworks"
+if [ -d "$APP_FRAMEWORKS_PATH" ]; then
+for FRAMEWORKS in "$APP_FRAMEWORKS_PATH/"*
+do
+    # Sign FRAMEWORKS in ipa
+    FILENAME=$(basename $FRAMEWORKS)
+    echo "SIGNING: $FILENAME WITH $EXPANDED_CODE_SIGN_IDENTITY"
+
+    /usr/bin/codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$FRAMEWORKS" 
+done
+fi
+
+
+
+
+
 # Get Entitlements
 TEMP_PLIST="$TEMP_PATH/temp.plist"
 REAL_CODE_SIGN_ENTITLEMENTS="$TEMP_PATH/app.entitlements"
