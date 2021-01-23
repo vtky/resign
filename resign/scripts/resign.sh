@@ -58,25 +58,36 @@ then
 	for DYLIB in "$DYLIBS_TO_INSERT_DIR/"*
 	do
 	FILENAME=$(basename $DYLIB)
-	echo "SIGNING: $FILENAME"
+	echo "SIGNING DYLIBs: $FILENAME"
 	/usr/bin/codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/$FILENAME"
 	done
 fi
 
 
+# Sign Frameworks
 APP_FRAMEWORKS_PATH="$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/Frameworks"
 if [ -d "$APP_FRAMEWORKS_PATH" ]; then
 for FRAMEWORKS in "$APP_FRAMEWORKS_PATH/"*
 do
-    # Sign FRAMEWORKS in ipa
     FILENAME=$(basename $FRAMEWORKS)
-    echo "SIGNING: $FILENAME WITH $EXPANDED_CODE_SIGN_IDENTITY"
+    echo "SIGNING Frameworks: $FILENAME WITH $EXPANDED_CODE_SIGN_IDENTITY"
 
     /usr/bin/codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$FRAMEWORKS" 
 done
 fi
 
 
+# Sign Plugins
+APP_PLUGINS_PATH="$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/PlugIns"
+if [ -d "$APP_PLUGINS_PATH" ]; then
+for PLUGIN in "$APP_PLUGINS_PATH/"*
+do
+    FILENAME=$(basename $PLUGIN)
+    echo "SIGNING PlugIns: $FILENAME WITH $EXPANDED_CODE_SIGN_IDENTITY"
+
+    /usr/bin/codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$PLUGIN"
+done
+fi
 
 
 
@@ -87,6 +98,11 @@ security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/"$EXPANDED_PROV
 /usr/libexec/PlistBuddy -c "Print Entitlements" "$TEMP_PLIST" -x > "$REAL_CODE_SIGN_ENTITLEMENTS"
 
 
+echo "Copying $EXPANDED_PROVISIONING_PROFILE.mobileprovision"
+cp -rf ~/Library/MobileDevice/Provisioning\ Profiles/"$EXPANDED_PROVISIONING_PROFILE.mobileprovision" "$BUILT_PRODUCTS_DIR/$TARGET_NAME.app/embedded.mobileprovision"
+
+echo "chmod +x $APP_EXECUTABLE_PATH"
+chmod +x $APP_EXECUTABLE_PATH
 
 
 # Sign and Entitle the Binary
